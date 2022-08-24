@@ -31,6 +31,15 @@ public class CountryController {
         return countryService.saveCountry(country);
     }
 
+    @DeleteMapping("/deletecountry/{countryId}")
+    public Mono<Void> deleteCountryById(@PathVariable String countryId){
+        return countryService.deleteCountry(countryId);
+    }
+
+
+
+
+
 
 
 }

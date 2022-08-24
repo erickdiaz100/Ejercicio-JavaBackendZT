@@ -12,7 +12,7 @@ import lombok.NoArgsConstructor;
 public class Cyclist {
     private String id;
     private String fullName;
-    private String competitorNumber;
+    private Integer competitorNumber;
     private Country country;
     private CyclingTeam cyclingTeam;
 }

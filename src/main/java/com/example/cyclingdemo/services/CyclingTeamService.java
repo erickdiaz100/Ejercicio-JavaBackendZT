@@ -1,12 +1,11 @@
 package com.example.cyclingdemo.services;
 
-import com.example.cyclingdemo.documents.CountryDocument;
 import com.example.cyclingdemo.documents.CyclingTeamDocument;
 import com.example.cyclingdemo.models.CyclingTeam;
 import com.example.cyclingdemo.models.Cyclist;
 import com.example.cyclingdemo.repositories.CountryRepository;
 import com.example.cyclingdemo.repositories.CyclingTeamRepository;
-import org.springframework.beans.factory.annotation.Autowired;
+import com.example.cyclingdemo.repositories.CyclistRepository;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -16,12 +15,20 @@ import java.util.List;
 @Service
 public class CyclingTeamService {
     private final CyclingTeamRepository cyclingTeamRepository;
+    private final CountryRepository countryRepository;
+    private final CyclistRepository cyclistRepository;
 
-    public CyclingTeamService(CyclingTeamRepository cyclingTeamRepository) {
+    public CyclingTeamService(CyclingTeamRepository cyclingTeamRepository, CountryRepository countryRepository, CyclistRepository cyclistRepository) {
         this.cyclingTeamRepository = cyclingTeamRepository;
+        this.countryRepository = countryRepository;
+        this.cyclistRepository = cyclistRepository;
     }
 
     public Mono<CyclingTeamDocument> saveCyclingTeam (CyclingTeamDocument cyclingTeam){
+        countryRepository.findById(cyclingTeam.getCountry().getId()).map(countryDocument -> {
+            countryDocument.getCyclingTeams().add(new CyclingTeam(cyclingTeam.getCyclingTeamId(),cyclingTeam.getName(),cyclingTeam.getTeamCode(),cyclingTeam.getCountry(),cyclingTeam.getCyclists()));
+            return countryDocument;
+        }).flatMap(countryRepository::save);
         return cyclingTeamRepository.save(cyclingTeam);
     }
 
@@ -34,7 +41,10 @@ public class CyclingTeamService {
     }
 
     public Mono<Void> deleteCyclingTeam(String cyclingTeamId){
-        return cyclingTeamRepository.deleteById(cyclingTeamId).flatMap(Mono::justOrEmpty);
+        return cyclingTeamRepository.findById(cyclingTeamId).flatMap(cyclingTeamDocument -> {
+            cyclistRepository.findAllByCyclingTeamTeamCode(cyclingTeamDocument.getTeamCode()).flatMap(cyclistRepository::delete);
+            return cyclingTeamRepository.deleteById(cyclingTeamDocument.getCyclingTeamId());
+        });
     }
     public Mono<CyclingTeamDocument> addCyclistToTeam(String cyclingTeamId, Cyclist cyclist){
         return cyclingTeamRepository.findById(cyclingTeamId).map(cyclingTeamDocument -> {
