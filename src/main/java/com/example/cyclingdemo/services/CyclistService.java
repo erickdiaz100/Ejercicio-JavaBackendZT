@@ -1,6 +1,8 @@
 package com.example.cyclingdemo.services;
 
 import com.example.cyclingdemo.documents.CyclistDocument;
+import com.example.cyclingdemo.models.Country;
+import com.example.cyclingdemo.models.CyclingTeam;
 import com.example.cyclingdemo.models.Cyclist;
 import com.example.cyclingdemo.repositories.CountryRepository;
 import com.example.cyclingdemo.repositories.CyclingTeamRepository;
@@ -23,15 +25,25 @@ public class CyclistService {
     }
 
     public Mono<CyclistDocument> saveCyclist (CyclistDocument cyclist){
-                countryRepository.findById(cyclist.getCountry().getId()).map(countryDocument -> {
-                    countryDocument.getCyclists().add(new Cyclist(cyclist.getCyclistId(),cyclist.getFullName(),cyclist.getCompetitorNumber(),cyclist.getCountry(),cyclist.getCyclingTeam()));
-                    return countryDocument;
-                }).flatMap(countryRepository::save);
-                cyclingTeamRepository.findById(cyclist.getCyclingTeam().getId()).map(cyclingTeamDocument -> {
-                    cyclingTeamDocument.getCyclists().add(new Cyclist(cyclist.getCyclistId(),cyclist.getFullName(),cyclist.getCompetitorNumber(),cyclist.getCountry(),cyclist.getCyclingTeam()));
-                    return cyclingTeamDocument;
-                }).flatMap(cyclingTeamRepository::save);
-        return cyclistRepository.save(cyclist);
+              return cyclistRepository.save(cyclist).flatMap(cyclistDocument -> {
+                  return countryRepository.findById(cyclist.getCountry().getCountryId()).map(countryDocument -> {
+                      countryDocument.getCyclists().add(new Cyclist(cyclist.getCyclistId(),cyclist.getFullName(),cyclist.getCompetitorNumber(),cyclist.getCountry(),cyclist.getCyclingTeam()));
+
+                      return countryDocument;
+                  }).flatMap(countryRepository::save).map(countryDocument -> {
+                      cyclistDocument.setCountry(new Country(countryDocument.getCountryId(),countryDocument.getName(),countryDocument.getCode(),countryDocument.getCyclingTeams(),countryDocument.getCyclists()));
+                      cyclingTeamRepository.findById(cyclist.getCyclingTeam().getCyclingTeamId()).map(cyclingTeamDocument -> {
+                          cyclingTeamDocument.getCyclists().add(new Cyclist(cyclistDocument.getCyclistId(),cyclistDocument.getFullName(),cyclistDocument.getCompetitorNumber(),cyclistDocument.getCountry(),cyclistDocument.getCyclingTeam()));
+                          return cyclingTeamDocument;
+                      }).flatMap(cyclingTeamRepository::save).map(cyclingTeamDocument -> {
+                          cyclistDocument.setCyclingTeam(new CyclingTeam(cyclingTeamDocument.getCyclingTeamId(),cyclingTeamDocument.getName(),cyclingTeamDocument.getTeamCode(),cyclingTeamDocument.getCountry(),cyclingTeamDocument.getCyclists()));
+                          return cyclistDocument;
+                      });
+                      return cyclistDocument;});
+              }).flatMap(cyclistRepository::save);
+
+
+
     }
 
     public Flux<CyclistDocument> getAllCyclist(){
@@ -43,11 +55,11 @@ public class CyclistService {
     }
     public Mono<Void> deleteCyclist(String cyclistId){
        return cyclistRepository.findById(cyclistId).flatMap(cyclistDocument -> {
-            countryRepository.findById(cyclistDocument.getCountry().getId()).map(countryDocument -> {
+            countryRepository.findById(cyclistDocument.getCountry().getCountryId()).map(countryDocument -> {
                 countryDocument.getCyclists().remove(cyclistDocument);
                 return countryDocument;
             }).flatMap(countryRepository::save);
-            cyclingTeamRepository.findById(cyclistDocument.getCyclingTeam().getId()).map(cyclingTeamDocument -> {
+            cyclingTeamRepository.findById(cyclistDocument.getCyclingTeam().getCyclingTeamId()).map(cyclingTeamDocument -> {
                 cyclingTeamDocument.getCyclists().remove(cyclistDocument);
                 return cyclingTeamDocument;
             }).flatMap(cyclingTeamRepository::save);

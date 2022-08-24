@@ -12,7 +12,7 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 public class Country {
-    private String id;
+    private String countryId;
     private String name;
     private String code;
     private List<CyclingTeam> cyclingTeams;

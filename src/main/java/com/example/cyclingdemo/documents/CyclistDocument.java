@@ -2,7 +2,6 @@ package com.example.cyclingdemo.documents;
 
 import com.example.cyclingdemo.models.Country;
 import com.example.cyclingdemo.models.CyclingTeam;
-import com.fasterxml.jackson.annotation.JsonSubTypes;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -28,7 +27,7 @@ public class CyclistDocument {
     private String fullName;
     @NotNull(message = "El numero de competidor no puede ser nulo")
     @Indexed(unique = true)
-@Size(max = 3)
+    @Max(999)
     private Integer competitorNumber;
     private Country country;
     private CyclingTeam cyclingTeam;
